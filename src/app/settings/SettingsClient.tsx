@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { fmt, periodLabel, MONTHS } from '@/lib/format'
+import { fmt, monthLabel, periodLabel, MONTHS } from '@/lib/format'
 import type { MonthlyBudget, Category, FixedExpenseTemplate } from '@/lib/types'
 
 interface HistoryMonth extends MonthlyBudget {
