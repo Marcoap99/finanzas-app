@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import AddExpenseModal from '@/components/AddExpenseModal'
 import FAB from '@/components/FAB'
 import ProgressBar from '@/components/ProgressBar'
-import { fmt, monthLabel, relativeDate, catEmoji } from '@/lib/format'
+import { fmt, periodLabel, relativeDate, catEmoji } from '@/lib/format'
 import type { MonthlyBudget, MonthlyFixedExpense, VariableExpense, Category, NewVariableExpense } from '@/lib/types'
 
 interface Props {
@@ -15,9 +15,10 @@ interface Props {
   variableExpenses: VariableExpense[]
   categories: Category[]
   userName: string
+  payday: number
 }
 
-export default function DashboardClient({ budget, fixedExpenses, variableExpenses, categories, userName }: Props) {
+export default function DashboardClient({ budget, fixedExpenses, variableExpenses, categories, userName, payday }: Props) {
   const [showModal, setShowModal] = useState(false)
   const router = useRouter()
   const supabase = createClient()
@@ -27,13 +28,24 @@ export default function DashboardClient({ budget, fixedExpenses, variableExpense
   const income        = Number(budget.monthly_income)
   const balance       = income - totalFixed - totalVariable
 
-  const now         = new Date()
-  const daysInMonth = new Date(budget.year, budget.month, 0).getDate()
-  const dayOfMonth  = now.getDate()
-  const daysLeft    = daysInMonth - dayOfMonth + 1
-  const dailyBudget = balance > 0 ? Math.floor(balance / daysLeft) : 0
-  const pctMonth    = Math.round((dayOfMonth / daysInMonth) * 100)
-  const pctSpent    = income > 0 ? Math.round(((totalFixed + totalVariable) / income) * 100) : 0
+  // Calcular período según payday
+  // Si payday=1 → período = mes calendario. Si payday>1 → período empieza el día payday del mes anterior.
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const periodEnd   = payday === 1
+    ? new Date(budget.year, budget.month, 1)           // 1° del mes siguiente
+    : new Date(budget.year, budget.month - 1, payday)  // día payday del mes actual
+
+  const periodStart = payday === 1
+    ? new Date(budget.year, budget.month - 1, 1)       // 1° del mes actual
+    : new Date(budget.year, budget.month - 2, payday)  // día payday del mes anterior (JS maneja meses negativos)
+
+  const totalDays = Math.round((periodEnd.getTime() - periodStart.getTime()) / 86400000)
+  const daysLeft  = Math.max(0, Math.round((periodEnd.getTime() - today.getTime()) / 86400000))
+  const pctPeriod = totalDays > 0 ? Math.round(((totalDays - daysLeft) / totalDays) * 100) : 0
+  const pctSpent  = income > 0 ? Math.round(((totalFixed + totalVariable) / income) * 100) : 0
+  const dailyBudget = balance > 0 && daysLeft > 0 ? Math.floor(balance / daysLeft) : 0
 
   // Top categorías
   const catMap: Record<string, number> = {}
@@ -61,7 +73,7 @@ export default function DashboardClient({ budget, fixedExpenses, variableExpense
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-500">Hola, {firstName} 👋</p>
-          <h1 className="text-xl font-bold text-gray-900">{monthLabel(budget.month, budget.year)}</h1>
+          <h1 className="text-xl font-bold text-gray-900">{periodLabel(budget.month, budget.year, payday)}</h1>
         </div>
         <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center">
           <span className="text-indigo-700 font-bold text-sm">{firstName.charAt(0).toUpperCase()}</span>
@@ -119,7 +131,7 @@ export default function DashboardClient({ budget, fixedExpenses, variableExpense
           <div className="bg-white rounded-2xl p-4 shadow-sm">
             <p className="text-xs text-gray-400 font-medium">Días restantes</p>
             <p className="text-3xl font-bold text-gray-800 mt-1">{daysLeft}</p>
-            <p className="text-xs text-gray-400">del mes</p>
+            <p className="text-xs text-gray-400">del período</p>
           </div>
           <div className="bg-white rounded-2xl p-4 shadow-sm">
             <p className="text-xs text-gray-400 font-medium">Gasto diario OK</p>
@@ -136,22 +148,22 @@ export default function DashboardClient({ budget, fixedExpenses, variableExpense
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <div className="flex justify-between items-center mb-3">
             <p className="text-sm font-bold text-gray-700">Ritmo de gasto</p>
-            <span className={`text-xs font-bold px-2 py-1 rounded-full ${pctSpent > pctMonth ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-600'}`}>
-              {pctSpent > pctMonth ? '⚠ Por encima' : '✓ En ritmo'}
+            <span className={`text-xs font-bold px-2 py-1 rounded-full ${pctSpent > pctPeriod ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-600'}`}>
+              {pctSpent > pctPeriod ? '⚠ Por encima' : '✓ En ritmo'}
             </span>
           </div>
           <div className="space-y-2.5">
             <div>
               <div className="flex justify-between text-xs text-gray-400 mb-1">
-                <span>Mes transcurrido</span><span className="font-bold">{pctMonth}%</span>
+                <span>Período transcurrido</span><span className="font-bold">{pctPeriod}%</span>
               </div>
-              <ProgressBar value={pctMonth} max={100} color="#CBD5E1" />
+              <ProgressBar value={pctPeriod} max={100} color="#CBD5E1" />
             </div>
             <div>
               <div className="flex justify-between text-xs text-gray-400 mb-1">
                 <span>Presupuesto usado</span><span className="font-bold">{pctSpent}%</span>
               </div>
-              <ProgressBar value={pctSpent} max={100} color={pctSpent > pctMonth ? '#EF4444' : '#4F46E5'} />
+              <ProgressBar value={pctSpent} max={100} color={pctSpent > pctPeriod ? '#EF4444' : '#4F46E5'} />
             </div>
           </div>
         </div>

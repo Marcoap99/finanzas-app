@@ -36,6 +36,53 @@ const DEFAULT_TEMPLATES = [
 ]
 
 /**
+ * Calcula el período actual según el día de pago.
+ * Si payday=25 y hoy es 5 de abril → período = abril (empezó 25 de marzo).
+ * Si payday=25 y hoy es 26 de abril → período = mayo (empezó 25 de abril).
+ * Si payday=1 → período = mes calendario actual.
+ */
+export function getCurrentPeriod(payday: number): { month: number; year: number } {
+  const today = new Date()
+  const day   = today.getDate()
+  let month   = today.getMonth() + 1
+  let year    = today.getFullYear()
+
+  // Si payday=1, siempre es el mes calendario actual
+  if (payday > 1 && day >= payday) {
+    month += 1
+    if (month > 12) { month = 1; year += 1 }
+  }
+
+  return { month, year }
+}
+
+/**
+ * Obtiene o crea el perfil del usuario (incluye payday).
+ * Por defecto payday=1 (primer día del mes).
+ */
+export async function getOrCreateUserProfile(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<{ payday: number }> {
+  const { data } = await supabase
+    .from('user_profiles')
+    .select('payday')
+    .eq('user_id', userId)
+    .single()
+
+  if (data) return data
+
+  // Crear perfil por defecto
+  const { data: created } = await supabase
+    .from('user_profiles')
+    .insert({ user_id: userId, payday: 1 })
+    .select('payday')
+    .single()
+
+  return created ?? { payday: 1 }
+}
+
+/**
  * Siembra categorías y templates para usuarios nuevos.
  * Solo corre si el usuario no tiene ninguna categoría aún.
  */

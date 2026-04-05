@@ -19,7 +19,13 @@ export default function AddExpenseModal({ categories, onClose, onSave }: Props) 
   const [saving, setSaving]   = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
-  useEffect(() => { setTimeout(() => inputRef.current?.focus(), 120) }, [])
+
+  useEffect(() => {
+    // Bloquear scroll del body cuando el modal está abierto
+    document.body.style.overflow = 'hidden'
+    setTimeout(() => inputRef.current?.focus(), 120)
+    return () => { document.body.style.overflow = '' }
+  }, [])
 
   const activeCats = categories.filter(c => c.is_active && c.scope === 'variable')
 
@@ -41,7 +47,8 @@ export default function AddExpenseModal({ categories, onClose, onSave }: Props) 
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center"
+      className="fixed bg-black/50 z-50 flex items-end justify-center"
+      style={{ top: 0, left: 0, right: 0, bottom: 0, width: '100%' }}
       onClick={e => e.target === e.currentTarget && onClose()}
     >
       <div className="w-full bg-white rounded-t-3xl max-h-[94vh] overflow-y-auto animate-slide-up">
@@ -147,7 +154,6 @@ export default function AddExpenseModal({ categories, onClose, onSave }: Props) 
             className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold text-base disabled:opacity-40 active:scale-95 transition-transform shadow-lg shadow-indigo-200">
             {saving ? 'Guardando...' : 'Guardar gasto'}
           </button>
-          {/* Espacio para que el botón no quede tapado por la nav bar */}
           <div className="h-6" />
         </div>
       </div>

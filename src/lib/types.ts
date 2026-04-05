@@ -69,6 +69,12 @@ export interface NewVariableExpense {
   expense_date: string
 }
 
+export interface UserProfile {
+  user_id: string
+  payday: number
+  created_at: string
+}
+
 // Para el dashboard
 export interface DashboardData {
   budget: MonthlyBudget

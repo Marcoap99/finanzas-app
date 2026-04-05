@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getOrCreateMonthlyBudget } from '@/lib/monthly'
+import { getOrCreateMonthlyBudget, getOrCreateUserProfile, getCurrentPeriod } from '@/lib/monthly'
 import VariableExpensesClient from './VariableExpensesClient'
 
 export default async function VariableExpensesPage() {
@@ -8,8 +8,9 @@ export default async function VariableExpensesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const now = new Date()
-  const budget = await getOrCreateMonthlyBudget(supabase, user.id, now.getMonth() + 1, now.getFullYear())
+  const { payday } = await getOrCreateUserProfile(supabase, user.id)
+  const { month, year } = getCurrentPeriod(payday)
+  const budget = await getOrCreateMonthlyBudget(supabase, user.id, month, year)
 
   const [{ data: variableExpenses }, { data: categories }] = await Promise.all([
     supabase
@@ -32,6 +33,7 @@ export default async function VariableExpensesPage() {
       budget={budget}
       variableExpenses={variableExpenses ?? []}
       categories={categories ?? []}
+      payday={payday}
     />
   )
 }

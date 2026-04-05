@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getOrCreateMonthlyBudget, seedUserDefaults } from '@/lib/monthly'
+import { getOrCreateMonthlyBudget, seedUserDefaults, getOrCreateUserProfile, getCurrentPeriod } from '@/lib/monthly'
 import DashboardClient from './DashboardClient'
 
 export default async function DashboardPage() {
@@ -8,14 +8,14 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const now = new Date()
-  const month = now.getMonth() + 1
-  const year  = now.getFullYear()
-
   // Sembrar defaults si es usuario nuevo
   await seedUserDefaults(supabase, user.id)
 
-  // Obtener o crear presupuesto del mes
+  // Obtener payday del perfil y calcular período actual
+  const { payday } = await getOrCreateUserProfile(supabase, user.id)
+  const { month, year } = getCurrentPeriod(payday)
+
+  // Obtener o crear presupuesto del período
   const budget = await getOrCreateMonthlyBudget(supabase, user.id, month, year)
 
   // Cargar datos del mes
@@ -45,6 +45,7 @@ export default async function DashboardPage() {
       variableExpenses={variableExpenses ?? []}
       categories={categories ?? []}
       userName={user.user_metadata?.name ?? user.email ?? ''}
+      payday={payday}
     />
   )
 }

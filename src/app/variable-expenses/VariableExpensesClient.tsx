@@ -5,16 +5,17 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AddExpenseModal from '@/components/AddExpenseModal'
 import FAB from '@/components/FAB'
-import { fmt, monthLabel, relativeDate, catEmoji } from '@/lib/format'
+import { fmt, periodLabel, relativeDate, catEmoji } from '@/lib/format'
 import type { MonthlyBudget, VariableExpense, Category, NewVariableExpense } from '@/lib/types'
 
 interface Props {
   budget: MonthlyBudget
   variableExpenses: VariableExpense[]
   categories: Category[]
+  payday: number
 }
 
-export default function VariableExpensesClient({ budget, variableExpenses, categories }: Props) {
+export default function VariableExpensesClient({ budget, variableExpenses, categories, payday }: Props) {
   const [showModal, setShowModal]   = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const router = useRouter()
@@ -48,7 +49,7 @@ export default function VariableExpensesClient({ budget, variableExpenses, categ
           </div>
         )}
       </div>
-      <p className="text-sm text-gray-400 mb-4">{monthLabel(budget.month, budget.year)}</p>
+      <p className="text-sm text-gray-400 mb-4">{periodLabel(budget.month, budget.year, payday)}</p>
 
       {variableExpenses.length === 0 ? (
         <div className="text-center py-16">

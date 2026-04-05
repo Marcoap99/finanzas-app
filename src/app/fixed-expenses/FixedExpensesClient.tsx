@@ -3,15 +3,16 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { fmt, monthLabel } from '@/lib/format'
+import { fmt, periodLabel } from '@/lib/format'
 import type { MonthlyBudget, MonthlyFixedExpense } from '@/lib/types'
 
 interface Props {
   budget: MonthlyBudget
   fixedExpenses: MonthlyFixedExpense[]
+  payday: number
 }
 
-export default function FixedExpensesClient({ budget, fixedExpenses }: Props) {
+export default function FixedExpensesClient({ budget, fixedExpenses, payday }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
   const router = useRouter()
@@ -47,7 +48,7 @@ export default function FixedExpensesClient({ budget, fixedExpenses }: Props) {
   return (
     <div className="px-4 pt-5">
       <h1 className="text-xl font-bold text-gray-900 mb-1">Gastos Fijos</h1>
-      <p className="text-sm text-gray-400 mb-4">{monthLabel(budget.month, budget.year)}</p>
+      <p className="text-sm text-gray-400 mb-4">{periodLabel(budget.month, budget.year, payday)}</p>
 
       {/* Summary */}
       <div className="bg-white rounded-2xl p-4 shadow-sm mb-5">

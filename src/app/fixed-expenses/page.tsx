@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getOrCreateMonthlyBudget } from '@/lib/monthly'
+import { getOrCreateMonthlyBudget, getOrCreateUserProfile, getCurrentPeriod } from '@/lib/monthly'
 import FixedExpensesClient from './FixedExpensesClient'
 
 export default async function FixedExpensesPage() {
@@ -8,8 +8,9 @@ export default async function FixedExpensesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const now = new Date()
-  const budget = await getOrCreateMonthlyBudget(supabase, user.id, now.getMonth() + 1, now.getFullYear())
+  const { payday } = await getOrCreateUserProfile(supabase, user.id)
+  const { month, year } = getCurrentPeriod(payday)
+  const budget = await getOrCreateMonthlyBudget(supabase, user.id, month, year)
 
   const { data: fixedExpenses } = await supabase
     .from('monthly_fixed_expenses')
@@ -17,5 +18,5 @@ export default async function FixedExpensesPage() {
     .eq('monthly_budget_id', budget.id)
     .order('due_day')
 
-  return <FixedExpensesClient budget={budget} fixedExpenses={fixedExpenses ?? []} />
+  return <FixedExpensesClient budget={budget} fixedExpenses={fixedExpenses ?? []} payday={payday} />
 }

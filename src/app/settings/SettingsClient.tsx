@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { fmt, monthLabel, MONTHS } from '@/lib/format'
+import { fmt, periodLabel, MONTHS } from '@/lib/format'
 import type { MonthlyBudget, Category, FixedExpenseTemplate } from '@/lib/types'
 
 interface HistoryMonth extends MonthlyBudget {
@@ -21,6 +21,7 @@ interface Props {
   currentVariable: number
   currentExpenses: unknown[]
   userEmail: string
+  payday: number
 }
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
@@ -120,12 +121,21 @@ function HistoryCard({ month }: { month: HistoryMonth }) {
   )
 }
 
-export default function SettingsClient({ budget, categories, templates, history, currentFixed, currentVariable, currentExpenses, userEmail }: Props) {
-  const [incomeVal, setIncomeVal] = useState(String(budget.monthly_income || ''))
-  const [newCat, setNewCat]       = useState('')
+export default function SettingsClient({ budget, categories, templates, history, currentFixed, currentVariable, currentExpenses, userEmail, payday }: Props) {
+  const [incomeVal, setIncomeVal]   = useState(String(budget.monthly_income || ''))
+  const [paydayVal, setPaydayVal]   = useState(String(payday))
+  const [newCat, setNewCat]         = useState('')
   const [showNewCat, setShowNewCat] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  const savePayday = async () => {
+    const val = parseInt(paydayVal)
+    if (!isNaN(val) && val >= 1 && val <= 28) {
+      await supabase.from('user_profiles').upsert({ user_id: budget.user_id, payday: val })
+      router.refresh()
+    }
+  }
 
   const saveIncome = async () => {
     const val = parseFloat(incomeVal)
@@ -174,23 +184,44 @@ export default function SettingsClient({ budget, categories, templates, history,
       <h1 className="text-xl font-bold text-gray-900 mb-5">Configuración</h1>
 
       {/* Ingreso mensual */}
-      <Section title={`Mes actual — ${monthLabel(budget.month, budget.year)}`} icon="📅">
-        <div className="px-4 pb-4">
-          <label className="text-sm text-gray-500">Ingreso mensual</label>
-          <div className="flex gap-2 mt-2">
-            <div className="flex-1 flex items-center border-2 border-gray-200 rounded-xl px-3 focus-within:border-indigo-400 bg-gray-50">
-              <span className="text-gray-400 text-sm font-bold mr-1">S/</span>
-              <input type="text" inputMode="decimal" value={incomeVal}
-                onChange={e => setIncomeVal(e.target.value.replace(/[^0-9.]/g, ''))}
-                onFocus={e => e.target.select()}
-                onBlur={saveIncome}
-                onKeyDown={e => e.key === 'Enter' && saveIncome()}
-                placeholder="0"
-                className="flex-1 py-3 px-1 text-gray-800 font-bold text-lg focus:outline-none bg-transparent" />
+      <Section title={`Período actual — ${periodLabel(budget.month, budget.year, payday)}`} icon="📅">
+        <div className="px-4 pb-4 space-y-4">
+          <div>
+            <label className="text-sm text-gray-500">Ingreso mensual</label>
+            <div className="flex gap-2 mt-2">
+              <div className="flex-1 flex items-center border-2 border-gray-200 rounded-xl px-3 focus-within:border-indigo-400 bg-gray-50">
+                <span className="text-gray-400 text-sm font-bold mr-1">S/</span>
+                <input type="text" inputMode="decimal" value={incomeVal}
+                  onChange={e => setIncomeVal(e.target.value.replace(/[^0-9.]/g, ''))}
+                  onFocus={e => e.target.select()}
+                  onBlur={saveIncome}
+                  onKeyDown={e => e.key === 'Enter' && saveIncome()}
+                  placeholder="0"
+                  className="flex-1 py-3 px-1 text-gray-800 font-bold text-lg focus:outline-none bg-transparent" />
+              </div>
+              <button onClick={saveIncome} className="px-4 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm">
+                Guardar
+              </button>
             </div>
-            <button onClick={saveIncome} className="px-4 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm">
-              Guardar
-            </button>
+          </div>
+          <div>
+            <label className="text-sm text-gray-500">Día de pago</label>
+            <p className="text-xs text-gray-400 mb-2">El período empieza este día cada mes (ej: 25 si te pagan el 25)</p>
+            <div className="flex gap-2">
+              <div className="flex-1 flex items-center border-2 border-gray-200 rounded-xl px-3 focus-within:border-indigo-400 bg-gray-50">
+                <input type="text" inputMode="numeric" value={paydayVal}
+                  onChange={e => setPaydayVal(e.target.value.replace(/[^0-9]/g, ''))}
+                  onFocus={e => e.target.select()}
+                  onBlur={savePayday}
+                  onKeyDown={e => e.key === 'Enter' && savePayday()}
+                  placeholder="1"
+                  className="flex-1 py-3 px-1 text-gray-800 font-bold text-lg focus:outline-none bg-transparent" />
+                <span className="text-gray-400 text-sm">de cada mes</span>
+              </div>
+              <button onClick={savePayday} className="px-4 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm">
+                Guardar
+              </button>
+            </div>
           </div>
         </div>
       </Section>
@@ -198,13 +229,13 @@ export default function SettingsClient({ budget, categories, templates, history,
       {/* Exportar mes actual */}
       {Number(budget.monthly_income) > 0 && (
         <button
-          onClick={() => exportCSV(monthLabel(budget.month, budget.year), Number(budget.monthly_income), currentFixed, currentVariable, currentExpenses as never)}
+          onClick={() => exportCSV(periodLabel(budget.month, budget.year, payday), Number(budget.monthly_income), currentFixed, currentVariable, currentExpenses as never)}
           className="w-full flex items-center justify-center gap-3 bg-emerald-500 text-white py-4 rounded-2xl font-bold text-base shadow-lg shadow-emerald-100 mb-4 active:scale-95 transition-transform"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
-          Exportar {MONTHS[budget.month - 1]} {budget.year} (.csv)
+          Exportar {periodLabel(budget.month, budget.year, payday)} (.csv)
         </button>
       )}
 
@@ -213,7 +244,7 @@ export default function SettingsClient({ budget, categories, templates, history,
         {history.length === 0 ? (
           <div className="px-4 pb-5 text-center">
             <p className="text-3xl mb-2 mt-1">🗓️</p>
-            <p className="text-sm font-semibold text-gray-600">{monthLabel(budget.month, budget.year)} es el primer mes</p>
+            <p className="text-sm font-semibold text-gray-600">{periodLabel(budget.month, budget.year, payday)} es el primer período</p>
             <p className="text-xs text-gray-400 mt-1">Los meses siguientes aparecerán aquí con resumen y exportación.</p>
           </div>
         ) : (
