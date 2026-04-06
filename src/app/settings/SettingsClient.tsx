@@ -150,8 +150,30 @@ export default function SettingsClient({ budget, categories, templates, history,
     router.refresh()
   }
 
-  const toggleTemplate = async (id: string, current: boolean) => {
+  const toggleTemplate = async (id: string, current: boolean, tplName: string, dueDay: number) => {
     await supabase.from('fixed_expense_templates').update({ is_active: !current }).eq('id', id)
+    if (current) {
+      // Apagando → eliminar del mes actual
+      await supabase.from('monthly_fixed_expenses')
+        .delete()
+        .eq('monthly_budget_id', budget.id)
+        .eq('fixed_template_id', id)
+    } else {
+      // Prendiendo → agregar al mes actual si no existe
+      const { data: existing } = await supabase.from('monthly_fixed_expenses')
+        .select('id').eq('monthly_budget_id', budget.id).eq('fixed_template_id', id).single()
+      if (!existing) {
+        const { data: lastAmt } = await supabase.rpc('get_last_template_amount', {
+          p_user_id: budget.user_id, p_template_id: id,
+          p_year: budget.year, p_month: budget.month,
+        })
+        await supabase.from('monthly_fixed_expenses').insert({
+          monthly_budget_id: budget.id, user_id: budget.user_id,
+          fixed_template_id: id, name: tplName,
+          amount: lastAmt ?? 0, due_day: dueDay, is_paid: false,
+        })
+      }
+    }
     router.refresh()
   }
 
@@ -290,7 +312,7 @@ export default function SettingsClient({ budget, categories, templates, history,
                 <span className={`text-sm font-semibold ${tpl.is_active ? 'text-gray-800' : 'text-gray-400'}`}>{tpl.name}</span>
                 <span className="text-xs text-gray-400 ml-2">día {tpl.due_day}</span>
               </div>
-              <Toggle checked={tpl.is_active} onChange={() => toggleTemplate(tpl.id, tpl.is_active)} />
+              <Toggle checked={tpl.is_active} onChange={() => toggleTemplate(tpl.id, tpl.is_active, tpl.name, tpl.due_day)} />
             </div>
           ))}
         </div>

@@ -135,12 +135,16 @@ export async function getOrCreateMonthlyBudget(
 
   if (error || !budget) throw new Error('No se pudo crear el presupuesto mensual')
 
-  // 3. Copiar templates activos como gastos fijos del mes
+  // 3. Reactivar todos los templates para el nuevo mes
+  await supabase.from('fixed_expense_templates')
+    .update({ is_active: true })
+    .eq('user_id', userId)
+
+  // Copiar todos los templates como gastos fijos del mes
   const { data: templates } = await supabase
     .from('fixed_expense_templates')
     .select('*')
     .eq('user_id', userId)
-    .eq('is_active', true)
 
   if (templates && templates.length > 0) {
     // Para cada template, buscar el último monto conocido
