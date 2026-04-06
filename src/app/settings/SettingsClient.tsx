@@ -194,7 +194,6 @@ export default function SettingsClient({ budget, categories, templates, history,
                 <input type="text" inputMode="decimal" value={incomeVal}
                   onChange={e => setIncomeVal(e.target.value.replace(/[^0-9.]/g, ''))}
                   onFocus={e => e.target.select()}
-                  onBlur={saveIncome}
                   onKeyDown={e => e.key === 'Enter' && saveIncome()}
                   placeholder="0"
                   className="flex-1 py-3 px-1 text-gray-800 font-bold text-lg focus:outline-none bg-transparent" />
@@ -212,7 +211,6 @@ export default function SettingsClient({ budget, categories, templates, history,
                 <input type="text" inputMode="numeric" value={paydayVal}
                   onChange={e => setPaydayVal(e.target.value.replace(/[^0-9]/g, ''))}
                   onFocus={e => e.target.select()}
-                  onBlur={savePayday}
                   onKeyDown={e => e.key === 'Enter' && savePayday()}
                   placeholder="1"
                   className="flex-1 py-3 px-1 text-gray-800 font-bold text-lg focus:outline-none bg-transparent" />
