@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AddExpenseModal from '@/components/AddExpenseModal'
 import FAB from '@/components/FAB'
+import InstallButton from '@/components/InstallButton'
 import ProgressBar from '@/components/ProgressBar'
 import { fmt, periodLabel, relativeDate, catEmoji } from '@/lib/format'
 import type { MonthlyBudget, MonthlyFixedExpense, VariableExpense, Category, NewVariableExpense } from '@/lib/types'
@@ -72,6 +73,8 @@ export default function DashboardClient({ budget, fixedExpenses, variableExpense
 
   return (
     <div className="px-4 pt-5 space-y-4">
+      <InstallButton />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
