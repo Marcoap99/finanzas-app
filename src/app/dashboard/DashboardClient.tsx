@@ -45,7 +45,10 @@ export default function DashboardClient({ budget, fixedExpenses, variableExpense
   const daysLeft  = Math.max(0, Math.round((periodEnd.getTime() - today.getTime()) / 86400000))
   const pctPeriod = totalDays > 0 ? Math.round(((totalDays - daysLeft) / totalDays) * 100) : 0
   const pctSpent  = income > 0 ? Math.round(((totalFixed + totalVariable) / income) * 100) : 0
-  const dailyBudget = balance > 0 && daysLeft > 0 ? Math.floor(balance / daysLeft) : 0
+  const dailyBudget  = balance > 0 && daysLeft > 0 ? Math.floor(balance / daysLeft) : 0
+  const todayStr     = today.toISOString().split('T')[0]
+  const todaySpent   = variableExpenses.filter(e => e.expense_date === todayStr).reduce((s, e) => s + Number(e.amount), 0)
+  const todayOver    = dailyBudget > 0 && todaySpent > dailyBudget
 
   // Top categorías
   const catMap: Record<string, number> = {}
@@ -125,22 +128,54 @@ export default function DashboardClient({ budget, fixedExpenses, variableExpense
         </div>
       </div>
 
-      {/* Días y gasto diario */}
+      {/* Días, gasto diario y tracker de hoy */}
       {income > 0 && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-xs text-gray-400 font-medium">Días restantes</p>
-            <p className="text-3xl font-bold text-gray-800 mt-1">{daysLeft}</p>
-            <p className="text-xs text-gray-400">del período</p>
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white rounded-2xl p-4 shadow-sm">
+              <p className="text-xs text-gray-400 font-medium">Días restantes</p>
+              <p className="text-3xl font-bold text-gray-800 mt-1">{daysLeft}</p>
+              <p className="text-xs text-gray-400">del período</p>
+            </div>
+            <div className="bg-white rounded-2xl p-4 shadow-sm">
+              <p className="text-xs text-gray-400 font-medium">Gasto diario OK</p>
+              <p className={`text-2xl font-bold mt-1 ${dailyBudget > 0 ? 'text-indigo-600' : 'text-red-500'}`}>
+                {dailyBudget > 0 ? fmt(dailyBudget) : 'S/ 0'}
+              </p>
+              <p className="text-xs text-gray-400">por día</p>
+            </div>
           </div>
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-xs text-gray-400 font-medium">Gasto diario OK</p>
-            <p className={`text-2xl font-bold mt-1 ${dailyBudget > 0 ? 'text-indigo-600' : 'text-red-500'}`}>
-              {dailyBudget > 0 ? fmt(dailyBudget) : 'S/ 0'}
-            </p>
-            <p className="text-xs text-gray-400">por día</p>
+          {/* Tracker del día */}
+          <div className={`rounded-2xl p-4 shadow-sm ${todayOver ? 'bg-red-50' : 'bg-white'}`}>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-bold text-gray-700">Hoy</p>
+              {todayOver
+                ? <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-600">⚠ Pasado</span>
+                : <span className="text-xs font-bold px-2 py-1 rounded-full bg-emerald-50 text-emerald-600">✓ En control</span>
+              }
+            </div>
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-xs text-gray-400">Gastado hoy</p>
+                <p className={`text-2xl font-bold ${todayOver ? 'text-red-600' : 'text-gray-800'}`}>{fmt(todaySpent)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-400">Presupuesto</p>
+                <p className="text-lg font-bold text-indigo-500">{fmt(dailyBudget)}</p>
+              </div>
+            </div>
+            {todayOver && (
+              <p className="text-xs text-red-500 font-semibold mt-2">
+                Te pasaste {fmt(todaySpent - dailyBudget)} del presupuesto de hoy
+              </p>
+            )}
+            {!todayOver && todaySpent > 0 && (
+              <p className="text-xs text-emerald-600 font-semibold mt-2">
+                Te quedan {fmt(dailyBudget - todaySpent)} para hoy
+              </p>
+            )}
           </div>
-        </div>
+        </>
       )}
 
       {/* Ritmo */}

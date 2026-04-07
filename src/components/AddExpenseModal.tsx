@@ -29,20 +29,34 @@ export default function AddExpenseModal({ categories, onClose, onSave }: Props) 
 
   const activeCats = categories.filter(c => c.is_active && c.scope === 'variable')
 
+  const buildExpense = () => ({
+    amount: parseFloat(amount),
+    description: desc.trim() || 'Sin descripción',
+    expense_type: type,
+    category_id: catId,
+    payment_method: payment,
+    expense_date: date,
+  })
+
   const handleSave = async () => {
     const num = parseFloat(amount)
     if (isNaN(num) || num <= 0) return
     setSaving(true)
-    await onSave({
-      amount: num,
-      description: desc.trim() || 'Sin descripción',
-      expense_type: type,
-      category_id: catId,
-      payment_method: payment,
-      expense_date: date,
-    })
+    await onSave(buildExpense())
     setSaving(false)
     onClose()
+  }
+
+  const handleSaveAndAnother = async () => {
+    const num = parseFloat(amount)
+    if (isNaN(num) || num <= 0) return
+    setSaving(true)
+    await onSave(buildExpense())
+    setSaving(false)
+    // Resetear solo monto y descripción, mantener el resto
+    setAmount('')
+    setDesc('')
+    inputRef.current?.focus()
   }
 
   return (
@@ -150,10 +164,16 @@ export default function AddExpenseModal({ categories, onClose, onSave }: Props) 
               className="w-full mt-2 border-2 border-gray-100 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-300 bg-gray-50" />
           </div>
 
-          <button onClick={handleSave} disabled={!amount || parseFloat(amount) <= 0 || saving}
-            className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold text-base disabled:opacity-40 active:scale-95 transition-transform shadow-lg shadow-indigo-200">
-            {saving ? 'Guardando...' : 'Guardar gasto'}
-          </button>
+          <div className="flex gap-2">
+            <button onClick={handleSaveAndAnother} disabled={!amount || parseFloat(amount) <= 0 || saving}
+              className="flex-1 bg-indigo-100 text-indigo-700 py-4 rounded-2xl font-bold text-sm disabled:opacity-40 active:scale-95 transition-transform">
+              {saving ? '...' : '+ Otro'}
+            </button>
+            <button onClick={handleSave} disabled={!amount || parseFloat(amount) <= 0 || saving}
+              className="flex-[2] bg-indigo-600 text-white py-4 rounded-2xl font-bold text-base disabled:opacity-40 active:scale-95 transition-transform shadow-lg shadow-indigo-200">
+              {saving ? 'Guardando...' : 'Guardar gasto'}
+            </button>
+          </div>
           <div className="h-6" />
         </div>
       </div>
