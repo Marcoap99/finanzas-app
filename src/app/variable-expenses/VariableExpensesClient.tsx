@@ -34,8 +34,7 @@ export default function VariableExpensesClient({ budget, variableExpenses, categ
   const [filterCat, setFilterCat]     = useState<string>('all')
   const [filterPay, setFilterPay]     = useState<'all' | 'cash' | 'card'>('all')
   const [sortKey, setSortKey]         = useState<SortKey>('date_desc')
-  const [dateFrom, setDateFrom]       = useState('')
-  const [dateTo, setDateTo]           = useState('')
+  const [filterDate, setFilterDate]   = useState('')
 
   const router  = useRouter()
   const supabase = createClient()
@@ -46,8 +45,7 @@ export default function VariableExpensesClient({ budget, variableExpenses, categ
     if (filterType !== 'all') list = list.filter(e => e.expense_type === filterType)
     if (filterCat  !== 'all') list = list.filter(e => (e.category?.name ?? 'Otros') === filterCat)
     if (filterPay  !== 'all') list = list.filter(e => e.payment_method === filterPay)
-    if (dateFrom) list = list.filter(e => e.expense_date >= dateFrom)
-    if (dateTo)   list = list.filter(e => e.expense_date <= dateTo)
+    if (filterDate) list = list.filter(e => e.expense_date === filterDate)
     list.sort((a, b) => {
       if (sortKey === 'date_desc')   return b.expense_date.localeCompare(a.expense_date)
       if (sortKey === 'date_asc')    return a.expense_date.localeCompare(b.expense_date)
@@ -59,8 +57,8 @@ export default function VariableExpensesClient({ budget, variableExpenses, categ
 
   const totalAll      = variableExpenses.reduce((s, e) => s + Number(e.amount), 0)
   const totalFiltered = filtered.reduce((s, e) => s + Number(e.amount), 0)
-  const isFiltered    = filterType !== 'all' || filterCat !== 'all' || filterPay !== 'all' || !!dateFrom || !!dateTo
-  const activeFiltersCount = [filterType !== 'all', filterCat !== 'all', filterPay !== 'all', !!dateFrom || !!dateTo].filter(Boolean).length
+  const isFiltered    = filterType !== 'all' || filterCat !== 'all' || filterPay !== 'all' || !!filterDate
+  const activeFiltersCount = [filterType !== 'all', filterCat !== 'all', filterPay !== 'all', !!filterDate].filter(Boolean).length
 
   const handleSave = async (data: NewVariableExpense) => {
     await supabase.from('variable_expenses').insert({ ...data, monthly_budget_id: budget.id, user_id: budget.user_id })
@@ -83,7 +81,7 @@ export default function VariableExpensesClient({ budget, variableExpenses, categ
     setEditing(null); router.refresh()
   }
 
-  const clearFilters = () => { setFilterType('all'); setFilterCat('all'); setFilterPay('all'); setDateFrom(''); setDateTo('') }
+  const clearFilters = () => { setFilterType('all'); setFilterCat('all'); setFilterPay('all'); setFilterDate('') }
 
   const Chip = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) => (
     <button onClick={onClick}
@@ -140,17 +138,14 @@ export default function VariableExpensesClient({ budget, variableExpenses, categ
           </div>
           {/* Fecha */}
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Rango de fecha</p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Día específico</p>
             <div className="flex gap-2 items-center">
-              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-                className="flex-1 border-2 border-gray-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-300 bg-gray-50" />
-              <span className="text-gray-400 text-xs font-bold">→</span>
-              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-                className="flex-1 border-2 border-gray-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-300 bg-gray-50" />
+              <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)}
+                className="flex-1 border-2 border-gray-100 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-300 bg-gray-50" />
+              {filterDate && (
+                <button onClick={() => setFilterDate('')} className="px-3 py-2.5 rounded-xl bg-gray-100 text-gray-500 text-xs font-bold">✕</button>
+              )}
             </div>
-            {(dateFrom || dateTo) && (
-              <button onClick={() => { setDateFrom(''); setDateTo('') }} className="text-xs text-red-400 font-semibold mt-1">Limpiar fechas</button>
-            )}
           </div>
           {/* Orden */}
           <div>
