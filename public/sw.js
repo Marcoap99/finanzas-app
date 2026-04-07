@@ -1,7 +1,11 @@
-const CACHE = 'finanzas-v2'
+const CACHE = 'finanzas-v3'
+const OFFLINE_URL = '/offline.html'
 
 self.addEventListener('install', e => {
   self.skipWaiting()
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.add(OFFLINE_URL))
+  )
 })
 
 self.addEventListener('activate', e => {
@@ -15,6 +19,8 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url)
+
+  // Cache estático de Next.js
   if (url.pathname.startsWith('/_next/static/')) {
     e.respondWith(
       caches.match(e.request).then(hit =>
@@ -24,6 +30,14 @@ self.addEventListener('fetch', e => {
           return res
         })
       )
+    )
+    return
+  }
+
+  // Páginas: red primero, offline como fallback
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match(OFFLINE_URL))
     )
   }
 })

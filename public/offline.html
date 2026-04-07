@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sin conexión – Mis Finanzas</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #F9FAFB;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .icon { font-size: 64px; margin-bottom: 20px; }
+    h1 { font-size: 22px; font-weight: 700; color: #111827; margin-bottom: 8px; }
+    p  { font-size: 15px; color: #6B7280; line-height: 1.5; max-width: 280px; }
+    button {
+      margin-top: 28px;
+      padding: 14px 28px;
+      background: #4F46E5;
+      color: #fff;
+      border: none;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="icon">📡</div>
+  <h1>Sin conexión</h1>
+  <p>Revisa tu señal e inténtalo de nuevo. Tus datos están seguros.</p>
+  <button onclick="location.reload()">Reintentar</button>
+</body>
+</html>
