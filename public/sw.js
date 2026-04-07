@@ -1,8 +1,7 @@
-const CACHE = 'finanzas-v1'
+const CACHE = 'finanzas-v2'
 
 self.addEventListener('install', e => {
   self.skipWaiting()
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/', '/manifest.json'])))
 })
 
 self.addEventListener('activate', e => {
@@ -16,7 +15,6 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url)
-  // Cache estático de Next.js para siempre
   if (url.pathname.startsWith('/_next/static/')) {
     e.respondWith(
       caches.match(e.request).then(hit =>
@@ -27,8 +25,5 @@ self.addEventListener('fetch', e => {
         })
       )
     )
-    return
   }
-  // Todo lo demás: red primero, caché como fallback
-  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)))
 })
