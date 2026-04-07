@@ -1,12 +1,8 @@
-[
-  {
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-      "namespace": "android_app",
-      "package_name": "PACKAGE_NAME_PLACEHOLDER",
-      "sha256_cert_fingerprints": [
-        "SHA256_FINGERPRINT_PLACEHOLDER"
-      ]
-    }
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.marcoantonio.finanzas",
+    "sha256_cert_fingerprints": ["5D:7B:A6:1D:0F:FD:52:98:B6:7A:83:7C:02:38:4D:75:91:86:84:72:04:A4:08:86:04:29:3A:6A:35:8D:DD:0A"]
   }
-]
+}]
