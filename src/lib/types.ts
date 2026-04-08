@@ -39,6 +39,7 @@ export interface MonthlyFixedExpense {
   due_day: number
   is_paid: boolean
   paid_at: string | null
+  payment_method: 'cash' | 'card'
   created_at: string
   // joined
   category?: Category | null

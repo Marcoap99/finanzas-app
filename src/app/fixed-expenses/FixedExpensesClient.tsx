@@ -123,9 +123,18 @@ export default function FixedExpensesClient({ budget, fixedExpenses, payday }: P
                       {exp.is_paid ? 'Pagado' : `Día ${exp.due_day}`}
                     </span>
                   </div>
-                  <p className={`font-bold text-sm mt-0.5 ${Number(exp.amount) === 0 ? 'text-gray-300' : 'text-gray-700'}`}>
-                    {Number(exp.amount) === 0 ? 'S/ —' : fmt(Number(exp.amount))}
-                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className={`font-bold text-sm ${Number(exp.amount) === 0 ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {Number(exp.amount) === 0 ? 'S/ —' : fmt(Number(exp.amount))}
+                    </p>
+                    <button onClick={async () => {
+                      const next = (exp.payment_method ?? 'cash') === 'cash' ? 'card' : 'cash'
+                      await supabase.from('monthly_fixed_expenses').update({ payment_method: next }).eq('id', exp.id)
+                      router.refresh()
+                    }} className={`text-xs px-2 py-0.5 rounded-full border transition-all ${(exp.payment_method ?? 'cash') === 'card' ? 'border-indigo-300 bg-indigo-50 text-indigo-600' : 'border-gray-200 bg-gray-50 text-gray-400'}`}>
+                      {(exp.payment_method ?? 'cash') === 'card' ? '💳 Tarjeta' : '💵 Efectivo'}
+                    </button>
+                  </div>
                 </div>
                 <div className="flex flex-col gap-1 flex-shrink-0">
                   <button onClick={() => setEditing({ id: exp.id, name: exp.name, amount: String(exp.amount), due_day: String(exp.due_day) })}
