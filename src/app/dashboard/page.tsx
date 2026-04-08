@@ -8,11 +8,10 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Sembrar defaults si es usuario nuevo
-  await seedUserDefaults(supabase, user.id)
-
-  // Obtener payday del perfil y calcular período actual
-  const { payday } = await getOrCreateUserProfile(supabase, user.id)
+  const [, { payday }] = await Promise.all([
+    seedUserDefaults(supabase, user.id),
+    getOrCreateUserProfile(supabase, user.id),
+  ])
   const { month, year } = getCurrentPeriod(payday)
 
   // Obtener o crear presupuesto del período

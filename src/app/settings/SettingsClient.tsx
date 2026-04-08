@@ -24,6 +24,18 @@ interface Props {
   payday: number
 }
 
+function Section({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-4">
+      <div className="px-4 pt-4 pb-2 flex items-center gap-2">
+        <span>{icon}</span>
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{title}</p>
+      </div>
+      {children}
+    </div>
+  )
+}
+
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <button onClick={() => onChange(!checked)}
@@ -191,16 +203,6 @@ export default function SettingsClient({ budget, categories, templates, history,
 
   const balance = Number(budget.monthly_income) - currentFixed - currentVariable
 
-  const Section = ({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) => (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-4">
-      <div className="px-4 pt-4 pb-2 flex items-center gap-2">
-        <span>{icon}</span>
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{title}</p>
-      </div>
-      {children}
-    </div>
-  )
-
   return (
     <div className="px-4 pt-5 pb-6">
       <h1 className="text-xl font-bold text-gray-900 mb-5">Configuración</h1>
@@ -210,38 +212,34 @@ export default function SettingsClient({ budget, categories, templates, history,
         <div className="px-4 pb-4 space-y-4">
           <div>
             <label className="text-sm text-gray-500">Ingreso mensual</label>
-            <div className="flex gap-2 mt-2">
-              <div className="flex-1 flex items-center border-2 border-gray-200 rounded-xl px-3 focus-within:border-indigo-400 bg-gray-50">
-                <span className="text-gray-400 text-sm font-bold mr-1">S/</span>
-                <input type="text" inputMode="decimal" value={incomeVal}
-                  onChange={e => setIncomeVal(e.target.value.replace(/[^0-9.]/g, ''))}
-                  onFocus={e => e.target.select()}
-                  onKeyDown={e => e.key === 'Enter' && saveIncome()}
-                  placeholder="0"
-                  className="flex-1 py-3 px-1 text-gray-800 font-bold text-lg focus:outline-none bg-transparent" />
-              </div>
-              <button onClick={saveIncome} className="px-4 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm">
-                Guardar
-              </button>
+            <div className="flex items-center border-2 border-gray-200 rounded-xl px-3 mt-2 focus-within:border-indigo-400 bg-gray-50">
+              <span className="text-gray-400 text-sm font-bold mr-1">S/</span>
+              <input type="text" inputMode="decimal" value={incomeVal}
+                onChange={e => setIncomeVal(e.target.value.replace(/[^0-9.]/g, ''))}
+                onFocus={e => e.target.select()}
+                onKeyDown={e => e.key === 'Enter' && saveIncome()}
+                placeholder="0"
+                className="flex-1 py-3 px-1 text-gray-800 font-bold text-lg focus:outline-none bg-transparent" />
             </div>
+            <button onClick={saveIncome} className="w-full mt-2 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm">
+              Guardar ingreso
+            </button>
           </div>
           <div>
             <label className="text-sm text-gray-500">Día de pago</label>
             <p className="text-xs text-gray-400 mb-2">El período empieza este día cada mes (ej: 25 si te pagan el 25)</p>
-            <div className="flex gap-2">
-              <div className="flex-1 flex items-center border-2 border-gray-200 rounded-xl px-3 focus-within:border-indigo-400 bg-gray-50">
-                <input type="text" inputMode="numeric" value={paydayVal}
-                  onChange={e => setPaydayVal(e.target.value.replace(/[^0-9]/g, ''))}
-                  onFocus={e => e.target.select()}
-                  onKeyDown={e => e.key === 'Enter' && savePayday()}
-                  placeholder="1"
-                  className="flex-1 py-3 px-1 text-gray-800 font-bold text-lg focus:outline-none bg-transparent" />
-                <span className="text-gray-400 text-sm">de cada mes</span>
-              </div>
-              <button onClick={savePayday} className="px-4 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm">
-                Guardar
-              </button>
+            <div className="flex items-center border-2 border-gray-200 rounded-xl px-3 focus-within:border-indigo-400 bg-gray-50">
+              <input type="text" inputMode="numeric" value={paydayVal}
+                onChange={e => setPaydayVal(e.target.value.replace(/[^0-9]/g, ''))}
+                onFocus={e => e.target.select()}
+                onKeyDown={e => e.key === 'Enter' && savePayday()}
+                placeholder="1"
+                className="flex-1 py-3 px-1 text-gray-800 font-bold text-lg focus:outline-none bg-transparent" />
+              <span className="text-gray-400 text-sm">de cada mes</span>
             </div>
+            <button onClick={savePayday} className="w-full mt-2 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm">
+              Guardar día de pago
+            </button>
           </div>
         </div>
       </Section>
